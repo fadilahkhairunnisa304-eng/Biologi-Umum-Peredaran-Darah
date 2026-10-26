@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Peredaran Darah & Fisika Fluida - Kelompok 6</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls for Three.js -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Chart.js for Hemodynamic Visualizer -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        cardiac: {
+                            red: '#e63946',
+                            blue: '#1d3557',
+                            lightBlue: '#457b9d',
+                            accent: '#f1faee',
+                            dark: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #e63946;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-red {
+            box-shadow: 0 0 20px rgba(230, 57, 70, 0.3);
+        }
+        .glow-blue {
+            box-shadow: 0 0 20px rgba(69, 123, 157, 0.3);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-red-500 selection:text-white">
+
+    <!-- Header / Navbar -->
+    <header class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-red-600 to-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-red-900/30">
+                        <i class="fa-solid fa-heart-pulse animate-pulse"></i>
+                    </div>
+                    <div>
+                        <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-red-400 via-rose-300 to-blue-400">BioFisika 3D</span>
+                        <span class="text-xs block text-slate-400 font-medium">Oleh: Kelompok 6 SMA</span>
+                    </div>
+                </div>
+                <nav class="hidden md:flex space-x-6 text-sm font-medium">
+                    <a href="#hero" class="hover:text-red-400 transition-colors">Beranda</a>
+                    <a href="#model-3d" class="hover:text-red-400 transition-colors">Anatomi 3D</a>
+                    <a href="#sirkulasi" class="hover:text-red-400 transition-colors">Sirkulasi Darah</a>
+                    <a href="#fisika" class="hover:text-red-400 transition-colors">Fisika Fluida</a>
+                    <a href="#kalkulator" class="hover:text-red-400 transition-colors">Kalkulator Debit</a>
+                    <a href="#pustaka" class="hover:text-red-400 transition-colors">Pustaka</a>
+                </nav>
+                <div class="flex items-center gap-2">
+                    <a href="#model-3d" class="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold shadow-lg shadow-red-900/40 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-cube"></i> Eksplorasi 3D
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero" class="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-900/20 via-slate-900/50 to-slate-950 -z-10"></div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-slate-700 text-xs font-semibold text-red-400">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+                        Media Pembelajaran Interaktif Fisika & Biologi
+                    </div>
+                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight">
+                        Mekanisme Pemompaan <span class="bg-clip-text text-transparent bg-gradient-to-r from-red-500 to-rose-300">Jantung</span> & <span class="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-300">Dinamika Fluida</span>
+                    </h1>
+                    <p class="text-slate-300 text-base sm:text-lg leading-relaxed">
+                        Selamat datang di portal pembelajaran karya <strong>Kelompok 6</strong>. Pelajari bagaimana organ jantung bekerja sebagai pompa biologis dan terapkan konsep-konsep Fisika seperti <strong>Tekanan Hidrostatis, Asas Kontinuitas, serta Hukum Poiseuille</strong> dalam aliran darah manusia.
+                    </p>
+                    <div class="flex flex-wrap gap-4 pt-2">
+                        <a href="#model-3d" class="px-6 py-3.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm shadow-lg shadow-red-600/30 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-play"></i> Mulai Simulasi 3D
+                        </a>
+                        <a href="#fisika" class="px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm border border-slate-700 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-atom"></i> Konsep Fisika
+                        </a>
+                    </div>
+                </div>
+                <div class="lg:col-span-5 flex justify-center">
+                    <div class="glass-card rounded-3xl p-6 border border-slate-700/60 w-full max-w-md glow-red relative overflow-hidden">
+                        <div class="text-center space-y-4">
+                            <div class="w-20 h-20 bg-red-500/10 rounded-2xl border border-red-500/30 mx-auto flex items-center justify-center text-red-500 text-4xl">
+                                <i class="fa-solid fa-heart-pulse animate-bounce"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-white">Identitas Karya</h3>
+                            <p class="text-xs text-slate-400">Media Pembelajaran STEM SMA - Biologi x Fisika</p>
+                            <div class="divide-y divide-slate-700/50 text-left text-xs text-slate-300 space-y-2 pt-2">
+                                <div class="pt-2 flex justify-between"><span>Kelompok</span><span class="font-bold text-red-400">Kelompok 6</span></div>
+                                <div class="pt-2 flex justify-between"><span>Materi Utama</span><span class="font-bold text-slate-200">Kardiologi & Fluida Dinamis</span></div>
+                                <div class="pt-2 flex justify-between"><span>Sasaran Pembaca</span><span class="font-bold text-slate-200">Siswa SMA / MA Kelas XI</span></div>
+                                <div class="pt-2 flex justify-between"><span>Fitur Unggulan</span><span class="font-bold text-emerald-400">Model 3D + AR + Kalkulator Q</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive 3D Heart Section -->
+    <section id="model-3d" class="py-12 bg-slate-950/80 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-8">
+                <h2 class="text-3xl font-extrabold text-white sm:text-4xl">Simulasi Model Jantung 3D Interaktif</h2>
+                <p class="mt-2 text-slate-400 text-sm">Gunakan mouse atau sentuhan jari pada layar HP untuk memutar, memperbesar (zoom), dan mengeksplorasi ruang serta katup jantung secara real-time.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- 3D Canvas Box -->
+                <div class="lg:col-span-8 bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden relative shadow-2xl h-[480px] sm:h-[550px]" id="canvas-container">
+                    <!-- WebGL Canvas -->
+                    <canvas id="heart3dCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+
+                    <!-- Overlay Controls -->
+                    <div class="absolute top-4 left-4 bg-slate-950/80 backdrop-blur border border-slate-800 rounded-xl p-3 text-xs space-y-2 z-10 max-w-[200px]">
+                        <div class="font-bold text-slate-200 border-b border-slate-800 pb-1 flex justify-between items-center">
+                            <span>Status Jantung</span>
+                            <span id="phase-badge" class="px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold">SISTOL</span>
+                        </div>
+                        <div class="flex justify-between items-center text-slate-300">
+                            <span>Frekuensi Denyut:</span>
+                            <span id="bpm-val" class="font-mono font-bold text-red-400">75 BPM</span>
+                        </div>
+                        <input type="range" id="bpm-slider" min="40" max="180" value="75" class="w-full accent-red-500">
+                    </div>
+
+                    <div class="absolute top-4 right-4 flex flex-col gap-2 z-10">
+                        <button id="btn-reset-cam" title="Reset Kamera" class="w-10 h-10 rounded-xl bg-slate-800/80 backdrop-blur hover:bg-slate-700 text-slate-200 flex items-center justify-center border border-slate-700 transition">
+                            <i class="fa-solid fa-arrows-to-dot"></i>
+                        </button>
+                        <button id="btn-toggle-blood" title="Tampilkan/Sembunyikan Animasi Aliran Darah" class="w-10 h-10 rounded-xl bg-red-600/80 backdrop-blur hover:bg-red-500 text-white flex items-center justify-center border border-red-500 transition">
+                            <i class="fa-solid fa-droplet"></i>
+                        </button>
+                        <button id="btn-ar-modal" title="Buka Kamera WebAR" class="w-10 h-10 rounded-xl bg-emerald-600/80 backdrop-blur hover:bg-emerald-500 text-white flex items-center justify-center border border-emerald-500 transition">
+                            <i class="fa-solid fa-vr-cardboard"></i>
+                        </button>
+                    </div>
+
+                    <!-- Interactive Part Annotations Floating Panel -->
+                    <div class="absolute bottom-4 left-4 right-4 bg-slate-950/80 backdrop-blur border border-slate-800 rounded-xl p-3 text-xs z-10 flex flex-wrap gap-2 items-center justify-between">
+                        <span class="text-slate-400 font-medium">Sorot Bagian:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="highlightPart('aorta')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-red-600/30 hover:text-red-300 text-slate-300 border border-slate-700 transition">Aorta</button>
+                            <button onclick="highlightPart('leftVentrikula')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-red-600/30 hover:text-red-300 text-slate-300 border border-slate-700 transition">Ventrikel Kiri</button>
+                            <button onclick="highlightPart('rightVentrikula')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-blue-600/30 hover:text-blue-300 text-slate-300 border border-slate-700 transition">Ventrikel Kanan</button>
+                            <button onclick="highlightPart('atrium')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-rose-600/30 hover:text-rose-300 text-slate-300 border border-slate-700 transition">Atrium Kiri & Kanan</button>
+                            <button onclick="highlightPart('katup')" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-amber-600/30 hover:text-amber-300 text-slate-300 border border-slate-700 transition">Katup Jantung</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Info Sidebar -->
+                <div class="lg:col-span-4 space-y-4">
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800">
+                        <h3 id="part-title" class="text-lg font-bold text-red-400 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info"></i> Anatomi Jantung Manusia
+                        </h3>
+                        <p id="part-desc" class="text-slate-300 text-xs mt-2 leading-relaxed">
+                            Jantung merupakan organ otot berongga berbentuk kerucut yang bertindak sebagai pompa ganda dalam sistem kardiovaskular. Klik tombol di bawah atau sorot bagian jantung pada model 3D untuk melihat deskripsi detailnya.
+                        </p>
+                    </div>
+
+                    <!-- Systole vs Diastole Card -->
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800 space-y-3">
+                        <h4 class="text-sm font-bold text-slate-200 border-b border-slate-800 pb-2 flex items-center justify-between">
+                            <span>Siklus Jantung & Tekanan</span>
+                            <i class="fa-solid fa-arrows-spin text-red-400"></i>
+                        </h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="p-3 bg-red-950/30 border border-red-900/50 rounded-xl">
+                                <span class="text-[11px] font-bold text-red-400 block">SISTOL (Kontraksi)</span>
+                                <p class="text-[11px] text-slate-300 mt-1">Jantung memompa darah keluar. Ventrikel menguncup, tekanan darah mencapai puncak sistolik (normal ~120 mmHg).</p>
+                            </div>
+                            <div class="p-3 bg-blue-950/30 border border-blue-900/50 rounded-xl">
+                                <span class="text-[11px] font-bold text-blue-400 block">DIASTOL (Relaksasi)</span>
+                                <p class="text-[11px] text-slate-300 mt-1">Jantung mengendur & mengasi ruang ventrikel dengan darah dari atrium. Tekanan turun (normal ~80 mmHg).</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Valves Role Card -->
+                    <div class="glass-card rounded-2xl p-5 border border-slate-800">
+                        <h4 class="text-sm font-bold text-amber-400 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved"></i> Peran Katup Jantung
+                        </h4>
+                        <p class="text-xs text-slate-300 leading-relaxed">
+                            Katup (Trikuspid, Bikuspid/Mitral, Aorta, dan Pulmonal) bertindak sebagai <strong>katup penahan satu arah (check valves)</strong>. Katup mencegah aliran balik (<em>backflow</em>) darah saat terjadi perbedaan tekanan fluktuatif selama siklus sistol-diastol.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Alert Modal Component (No Browser Alert) -->
+    <div id="custom-alert" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-sm w-full rounded-2xl p-6 border border-slate-700 text-center space-y-4">
+            <div class="w-12 h-12 rounded-full bg-red-500/20 text-red-400 mx-auto flex items-center justify-center text-xl border border-red-500/30">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h4 class="text-base font-bold text-white" id="alert-title">Pemberitahuan</h4>
+            <p class="text-xs text-slate-300" id="alert-message">Pesan peringatan.</p>
+            <button onclick="closeCustomAlert()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-semibold transition">
+                Mengerti
+            </button>
+        </div>
+    </div>
+
+    <!-- Sirkulasi Darah Section (Peredaran Darah Besar & Kecil) -->
+    <section id="sirkulasi" class="py-16 bg-slate-900 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-red-500 font-semibold text-xs uppercase tracking-wider">Mekanisme Aliran</span>
+                <h2 class="text-3xl font-extrabold text-white mt-1">Peredaran Darah Kecil & Besar</h2>
+                <p class="text-slate-400 text-sm mt-2">Darah dipompa dalam siklus tertutup ganda (*double circulation*) untuk memasok oksigen dan mengangkut sisa metabolisme.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Peredaran Darah Kecil (Pulmonalis) -->
+                <div class="glass-card rounded-3xl p-6 border border-slate-800 glow-blue relative">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-lg border border-blue-500/30">
+                            <i class="fa-solid fa-lungs"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Sirkulasi Pulmonalis (Peredaran Darah Kecil)</h3>
+                            <span class="text-xs text-blue-400 font-medium">Jantung → Paru-Paru → Jantung</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                        Bertujuan meregenerasi kandungan oksigen dalam darah. Darah deoksigenasi (kaya $CO_2$) dipompa dari ventrikel kanan menuju paru-paru untuk pertukaran gas alveolar, lalu kembali ke atrium kiri kaya $O_2$.
+                    </p>
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-xs space-y-2">
+                        <div class="font-bold text-slate-300 mb-1">Rute Aliran:</div>
+                        <div class="flex items-center gap-2 text-slate-400 flex-wrap">
+                            <span class="px-2 py-1 rounded bg-blue-900/50 text-blue-300">Ventrikel Kanan</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">Arteri Pulmonalis</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <span class="px-2 py-1 rounded bg-emerald-900/50 text-emerald-300">Paru-Paru</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">Vena Pulmonalis</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <span class="px-2 py-1 rounded bg-red-900/50 text-red-300">Atrium Kiri</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Peredaran Darah Besar (Sistemik) -->
+                <div class="glass-card rounded-3xl p-6 border border-slate-800 glow-red relative">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-red-600/20 text-red-400 flex items-center justify-center font-bold text-lg border border-red-500/30">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Sirkulasi Sistemik (Peredaran Darah Besar)</h3>
+                            <span class="text-xs text-red-400 font-medium">Jantung → Seluruh Tubuh → Jantung</span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed mb-4">
+                        Mengalirkan darah kaya $O_2$ dan nutrisi dari ventrikel kiri melalui Aorta ke seluruh sel dan jaringan tubuh, kemudian mengembalikan darah deoksigenasi kembali ke atrium kanan.
+                    </p>
+                    <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800 text-xs space-y-2">
+                        <div class="font-bold text-slate-300 mb-1">Rute Aliran:</div>
+                        <div class="flex items-center gap-2 text-slate-400 flex-wrap">
+                            <span class="px-2 py-1 rounded bg-red-900/50 text-red-300">Ventrikel Kiri</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">Aorta & Arteri</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <span class="px-2 py-1 rounded bg-purple-900/50 text-purple-300">Kapiler Tubuh</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <span class="px-2 py-1 rounded bg-slate-800 text-slate-300">Vena Cava</span>
+                            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            <span class="px-2 py-1 rounded bg-blue-900/50 text-blue-300">Atrium Kanan</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Integrasi Konsep Fisika (Fluida Dinamis) -->
+    <section id="fisika" class="py-16 bg-slate-950 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-12">
+                <span class="text-cyan-400 font-semibold text-xs uppercase tracking-wider">Integrasi Sains</span>
+                <h2 class="text-3xl font-extrabold text-white mt-1">Eksplorasi Konsep Fisika Fluida</h2>
+                <p class="text-slate-400 text-sm mt-2">Sistem kardiovaskular mematuhi prinsip-prinsip fisika fluida dinamis dan tekanan hidrodinamis.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Hukum Poiseuille & Viskositas -->
+                <div class="glass-card rounded-2xl p-6 border border-slate-800 space-y-3">
+                    <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-prescription-bottle"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Hukum Poiseuille & Jari-Jari Pembuluh</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Debit aliran darah ($Q$) sangat sensitif terhadap jari-jari pembuluh darah ($r$). Menurut Hukum Poiseuille:
+                    </p>
+                    <div class="p-3 bg-slate-900 rounded-xl text-center font-mono text-cyan-300 text-xs font-bold border border-slate-800">
+                        Q = (ΔP · π · r⁴) / (8 · η · L)
+                    </div>
+                    <p class="text-[11px] text-slate-400">
+                        *Catatan*: Jika jari-jari pembuluh darah ($r$) berkurang setengah akibat penyempitan (arteriosklerosis), resistensi meningkat 16 kali lipat!
+                    </p>
+                </div>
+
+                <!-- Persamaan Kontinuitas -->
+                <div class="glass-card rounded-2xl p-6 border border-slate-800 space-y-3">
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-infinity"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Persamaan Kontinuitas</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Fluida tak termampatkan yang mengalir dalam pembuluh memenuhi kontinuitas debit:
+                    </p>
+                    <div class="p-3 bg-slate-900 rounded-xl text-center font-mono text-amber-300 text-xs font-bold border border-slate-800">
+                        A₁ · v₁ = A₂ · v₂
+                    </div>
+                    <p class="text-[11px] text-slate-400">
+                        Ketika total luas penampang kapiler ($A_2$) jauh lebih besar daripada Aorta ($A_1$), kecepatan aliran ($v_2$) melambat dramatis, memungkinkan pertukaran gas yang optimal.
+                    </p>
+                </div>
+
+                <!-- Tekanan & Beda Tekanan (ΔP) -->
+                <div class="glass-card rounded-2xl p-6 border border-slate-800 space-y-3">
+                    <div class="w-12 h-12 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Tekanan & Gradien Tekanan</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Darah mengalir dari area bertekanan tinggi ke tekanan lebih rendah ($P_{aorta} \rightarrow P_{vena}$).
+                    </p>
+                    <div class="p-3 bg-slate-900 rounded-xl text-center font-mono text-rose-300 text-xs font-bold border border-slate-800">
+                        P = F / A &nbsp;|&nbsp; ΔP = P₁ - P₂
+                    </div>
+                    <p class="text-[11px] text-slate-400">
+                        Pemompaan ventrikel memberikan gaya ($F$) pada area katup ($A$), menciptakan tekanan penggerak utama darah.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Kalkulator Debit Aliran Darah Interactive -->
+    <section id="kalkulator" class="py-16 bg-slate-900 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold">
+                        <i class="fa-solid fa-calculator"></i> Simulasi & Kalkulasi Fisika
+                    </div>
+                    <h2 class="text-3xl font-extrabold text-white">Kalkulator Debit Aliran Darah ($Q$)</h2>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Hitung debit aliran darah ($Q$) berdasarkan volume darah ($V$) yang dipompa oleh jantung dalam selang waktu tertentu ($t$), menggunakan rumus dasar fluida:
+                    </p>
+                    <div class="p-4 bg-slate-950 rounded-2xl border border-slate-800 font-mono text-center text-emerald-400 text-lg font-bold">
+                        Q = V / t
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        Di mana:
+                        <br>• <strong>Q</strong> = Debit Aliran ($m^3/s$ atau $mL/s$)
+                        <br>• <strong>V</strong> = Volume Stroke / Darah ($mL$ atau $L$)
+                        <br>• <strong>t</strong> = Waktu ($s$ atau $menit$)
+                    </p>
+                </div>
+
+                <!-- Calculator Interactive Form Card -->
+                <div class="lg:col-span-7">
+                    <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl">
+                        <form id="calc-form" class="space-y-4" onsubmit="return false;">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Volume Darah (V)</label>
+                                    <div class="relative">
+                                        <input type="number" id="input-volume" value="70" step="1" min="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-red-500">
+                                        <span class="absolute right-3 top-2.5 text-xs text-slate-500 font-bold">mL</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-500">Contoh: Stroke Volume rata-rata ~70 mL/denyut</span>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-300 mb-1">Selang Waktu (t)</label>
+                                    <div class="relative">
+                                        <input type="number" id="input-time" value="0.8" step="0.1" min="0.1" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-red-500">
+                                        <span class="absolute right-3 top-2.5 text-xs text-slate-500 font-bold">detik (s)</span>
+                                    </div>
+                                    <span class="text-[10px] text-slate-500">Contoh: 1 siklus jantung ~0.8 detik (75 BPM)</span>
+                                </div>
+                            </div>
+
+                            <button id="btn-calculate" onclick="calculateFlow()" class="w-full py-3 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold rounded-xl text-sm shadow-lg shadow-red-900/40 transition">
+                                <i class="fa-solid fa-calculator mr-2"></i> Hitung Debit Aliran
+                            </button>
+                        </form>
+
+                        <!-- Result Display -->
+                        <div id="calc-result" class="mt-6 p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                                <span class="text-xs font-bold text-slate-400">Hasil Kalkulasi Debit (Q)</span>
+                                <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">Kalkulasi Real-time</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-center">
+                                <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
+                                    <span class="text-[11px] text-slate-400 block">Debit per Detik</span>
+                                    <span id="res-ml-s" class="text-xl font-extrabold text-emerald-400">87.50</span>
+                                    <span class="text-[10px] text-slate-400 block">mL / detik</span>
+                                </div>
+                                <div class="p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
+                                    <span class="text-[11px] text-slate-400 block">Curah Jantung / Menit</span>
+                                    <span id="res-l-min" class="text-xl font-extrabold text-cyan-400">5.25</span>
+                                    <span class="text-[10px] text-slate-400 block">Liter / menit</span>
+                                </div>
+                            </div>
+                            <p id="res-analysis" class="text-[11px] text-slate-300 italic text-center pt-1">
+                                Analisis: Pada kondisi istirahat normal, jantung memompa sekitar 5.25 Liter darah per menit ke seluruh tubuh.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- WebAR Modal Overlay -->
+    <div id="ar-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card max-w-lg w-full rounded-3xl p-6 border border-slate-700 relative text-center space-y-4">
+            <button onclick="closeARModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-xl">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center text-3xl border border-emerald-500/40">
+                <i class="fa-solid fa-camera"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white">Mode WebAR Interaktif</h3>
+            <p class="text-xs text-slate-300">
+                Fitur ini memperbolehkan Anda memproyeksikan model jantung 3D ke lingkungan sekitar menggunakan kamera HP atau Laptop Anda.
+            </p>
+
+            <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 text-left text-xs space-y-2">
+                <div class="font-bold text-emerald-400">Petunjuk Akses WebAR:</div>
+                <ol class="list-decimal list-inside text-slate-300 space-y-1">
+                    <li>Izinkan akses kamera saat diminta oleh peramban (browser).</li>
+                    <li>Arahkan kamera ke permukaan datar atau kartu penanda.</li>
+                    <li>Gunakan gesture pinch untuk memperbesar/memperkecil model.</li>
+                </ol>
+            </div>
+
+            <!-- Simulated AR Camera Container -->
+            <div id="ar-camera-view" class="w-full h-48 bg-slate-900 rounded-xl border border-slate-800 relative overflow-hidden flex items-center justify-center">
+                <video id="ar-video" class="w-full h-full object-cover hidden" autoplay playsinline></video>
+                <div id="ar-placeholder" class="text-center p-4">
+                    <i class="fa-solid fa-video-slash text-2xl text-slate-600 mb-2"></i>
+                    <p class="text-xs text-slate-400">Kamera belum diaktifkan.</p>
+                </div>
+            </div>
+
+            <div class="flex gap-2 justify-end">
+                <button onclick="startARCamera()" class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex-1 transition">
+                    <i class="fa-solid fa-power-off mr-1"></i> Aktifkan Kamera AR
+                </button>
+                <button onclick="closeARModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Petunjuk Penggunaan Modal/Section -->
+    <section class="py-12 bg-slate-950/60 border-t border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800">
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-question text-red-400"></i> Petunjuk Penggunaan Website Media Pembelajaran
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-300">
+                    <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1">
+                        <span class="font-bold text-red-400 block">1. Interaksi Model 3D</span>
+                        <p>Klik dan geser mouse (atau sentuh di HP) untuk memutar model. Gunakan scroll mouse atau cubit layar untuk memperbesar (*zoom*).</p>
+                    </div>
+                    <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1">
+                        <span class="font-bold text-cyan-400 block">2. Kontrol Simulasi & Sorot</span>
+                        <p>Gunakan slider BPM untuk mengubah frekuensi denyut jantung. Klik tombol bagian (Aorta, Ventrikel) untuk membaca keterangan anatomi.</p>
+                    </div>
+                    <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1">
+                        <span class="font-bold text-emerald-400 block">3. Kalkulator Fisika</span>
+                        <p>Ubah input volume ($V$) dan waktu ($t$) pada kalkulator untuk menghitung debit aliran darah ($Q$) dan melihat analisisnya.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Daftar Pustaka (5 Minimal Literature Valid) -->
+    <section id="pustaka" class="py-12 bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="border-t border-slate-800 pt-8">
+                <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-book-bookmark text-red-400"></i> Daftar Pustaka & Literatur Referensi
+                </h3>
+                <ol class="list-decimal list-inside text-xs text-slate-400 space-y-2 leading-relaxed">
+                    <li>Hall, J. E., & Hall, M. E. (2020). <em>Guyton and Hall Textbook of Medical Physiology</em> (14th ed.). Elsevier. [Landasan teori mekanisme sistol, diastol, dan cardiac output].</li>
+                    <li>Campbell, N. A., Urry, L. A., Cain, M. L., Wasserman, S. A., Minorsky, P. V., & Reece, J. B. (2017). <em>Biology</em> (11th ed.). Pearson. [Struktur anatomi jantung dan sirkulasi ganda].</li>
+                    <li>Serway, R. A., & Jewett, J. W. (2018). <em>Physics for Scientists and Engineers with Modern Physics</em> (10th ed.). Cengage Learning. [Konsep mekanika fluida, persamaan kontinuitas, dan Hukum Poiseuille].</li>
+                    <li>Kementerian Pendidikan dan Kebudayaan Indonesia. (2020). <em>Modul Pembelajaran SMA Biologi: Sistem Peredaran Darah Pada Manusia</em>. Direktorat SMA, Kemdikbud.</li>
+                    <li>Caro, C. G., Pedley, T. J., Schrter, R. C., & Seed, W. A. (2012). <em>The Mechanics of the Circulation</em> (2nd ed.). Cambridge University Press. [Dinamika fluida kardiovaskular dan sifat hemodinamik darah].</li>
+                </ol>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>© 2026 <strong>Kelompok 6</strong> - Media Pembelajaran 3D Peredaran Darah Manusia & Fisika Fluida.</p>
+            <p class="mt-1">Dibuat menggunakan HTML5, Tailwind CSS, dan Three.js untuk deployment GitHub Pages.</p>
+        </div>
+    </footer>
+
+    <!-- Three.js 3D Interactive Heart Simulation Script -->
+    <script>
+        let scene, camera, renderer, controls;
+        let heartGroup, ventricleLeft, ventricleRight, aortaMesh, valvesGroup;
+        let bloodParticles = [];
+        let animationFrameId;
+        let bpm = 75;
+        let clock = new THREE.Clock();
+        let showBlood = true;
+
+        // Interactive descriptions database
+        const partData = {
+            aorta: {
+                title: "Aorta (Arteri Utama)",
+                desc: "Aorta adalah pembuluh darah arteri terbesar dalam tubuh. Aorta menerima darah kaya O2 langsung dari Ventrikel Kiri di bawah tekanan tinggi (sistolik ~120 mmHg) dan menyalurkannya ke seluruh sirkulasi sistemik tubuh."
+            },
+            leftVentrikula: {
+                title: "Ventrikel Kiri (Bilik Kiri)",
+                desc: "Ruang jantung dengan dinding otot paling tebal. Ventrikel Kiri menghasilkan gaya pemompaan utama yang menghasilkan tekanan hidrodinamis tinggi untuk mengatasi resistensi pembuluh darah di seluruh tubuh."
+            },
+            rightVentrikula: {
+                title: "Ventrikel Kanan (Bilik Kanan)",
+                desc: "Memompa darah deoksigenasi (kaya CO2) menuju paru-paru melalui Arteri Pulmonalis dengan tekanan yang lebih rendah dibandingkan ventrikel kiri."
+            },
+            atrium: {
+                title: "Atrium (Serambi Kiri & Kanan)",
+                desc: "Atrium bertindak sebagai ruang penerima darah. Atrium Kanan menerima darah dari Vena Cava, sedangkan Atrium Kiri menerima darah kaya oksigen dari Paru-paru."
+            },
+            katup: {
+                title: "Katup Jantung (Heart Valves)",
+                desc: "Terdiri dari katup Trikuspid, Bikuspid (Mitral), Aorta, dan Pulmonal. Katup ini berfungsi sebagai katup pengarah satu arah untuk mencegah backflow (aliran balik) cairan saat siklus pemompaan sistol-diastol."
+            }
+        };
+
+        function init3DHeart() {
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // 1. Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b0f19);
+
+            // 2. Camera setup
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(0, 2, 12);
+
+            // 3. Renderer setup
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('heart3dCanvas'), antialias: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+
+            // 4. Orbit Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 25;
+            controls.minDistance = 5;
+
+            // 5. Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight1.position.set(5, 10, 7);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x457b9d, 0.5);
+            dirLight2.position.set(-5, -5, -5);
+            scene.add(dirLight2);
+
+            const pointLightRed = new THREE.PointLight(0xe63946, 1, 10);
+            pointLightRed.position.set(0, 0, 2);
+            scene.add(pointLightRed);
+
+            // 6. Build Stylized 3D Anatomical Heart Model
+            heartGroup = new THREE.Group();
+
+            // Ventricle Left (Main Heart Mass) - Custom Sphere Mesh
+            const heartGeo = new THREE.SphereGeometry(2, 32, 32);
+            // Deform geometry to shape like a heart muscle
+            const pos = heartGeo.attributes.position;
+            for (let i = 0; i < pos.count; i++) {
+                let x = pos.getX(i);
+                let y = pos.getY(i);
+                let z = pos.getZ(i);
+
+                // Taper bottom for apex
+                if (y < 0) {
+                    x *= (1 + y * 0.2);
+                    z *= (1 + y * 0.2);
+                }
+                pos.setXYZ(i, x, y * 1.2, z * 0.9);
+            }
+            heartGeo.computeVertexNormals();
+
+            const heartMat = new THREE.MeshStandardMaterial({
+                color: 0xaa2233,
+                roughness: 0.4,
+                metalness: 0.1,
+                bumpScale: 0.05
+            });
+            ventricleLeft = new THREE.Mesh(heartGeo, heartMat);
+            heartGroup.add(ventricleLeft);
+
+            // Ventricle Right Bulge
+            const rvGeo = new THREE.SphereGeometry(1.3, 24, 24);
+            const rvMat = new THREE.MeshStandardMaterial({ color: 0x992244, roughness: 0.5 });
+            ventricleRight = new THREE.Mesh(rvGeo, rvMat);
+            ventricleRight.position.set(-1, -0.3, 0.5);
+            ventricleRight.scale.set(1.1, 1.2, 0.8);
+            heartGroup.add(ventricleRight);
+
+            // Aorta Arch (Red Curved Pipe)
+            const aortaCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(0, 1.5, 0),
+                new THREE.Vector3(0.3, 3, -0.2),
+                new THREE.Vector3(1, 3.8, -0.5),
+                new THREE.Vector3(1.8, 3.2, -0.8),
+                new THREE.Vector3(1.7, 1.5, -1)
+            ]);
+            const aortaGeo = new THREE.TubeGeometry(aortaCurve, 32, 0.45, 16, false);
+            const aortaMat = new THREE.MeshStandardMaterial({ color: 0xee2233, roughness: 0.3 });
+            aortaMesh = new THREE.Mesh(aortaGeo, aortaMat);
+            aortaMesh.name = "aorta";
+            heartGroup.add(aortaMesh);
+
+            // Vena Cava / Pulmonary Trunk (Blue Pipe)
+            const venaCurve = new THREE.CatmullRomCurve3([
+                new THREE.Vector3(-0.8, 1, 0.5),
+                new THREE.Vector3(-1.2, 2.8, 0.2),
+                new THREE.Vector3(-1.5, 3.5, 0)
+            ]);
+            const venaGeo = new THREE.TubeGeometry(venaCurve, 24, 0.4, 16, false);
+            const venaMat = new THREE.MeshStandardMaterial({ color: 0x225599, roughness: 0.3 });
+            const venaMesh = new THREE.Mesh(venaGeo, venaMat);
+            heartGroup.add(venaMesh);
+
+            // Valves Visual Representation
+            valvesGroup = new THREE.Group();
+            const valveGeo = new THREE.TorusGeometry(0.4, 0.08, 12, 24);
+            const valveMat = new THREE.MeshStandardMaterial({ color: 0xfbc531, roughness: 0.2 });
+            const valve1 = new THREE.Mesh(valveGeo, valveMat);
+            valve1.rotation.x = Math.PI / 2;
+            valve1.position.set(0, 1.2, 0);
+
+            const valve2 = valve1.clone();
+            valve2.position.set(-0.8, 0.8, 0.3);
+
+            valvesGroup.add(valve1);
+            valvesGroup.add(valve2);
+            heartGroup.add(valvesGroup);
+
+            scene.add(heartGroup);
+
+            // 7. Create Animated Blood Flow Particles
+            createBloodParticles();
+
+            // Window resize handler
+            window.addEventListener('resize', onWindowResize);
+
+            // Start Animation Loop
+            animate();
+        }
+
+        function createBloodParticles() {
+            const particleCount = 120;
+            const geo = new THREE.SphereGeometry(0.08, 8, 8);
+
+            const redMat = new THREE.MeshBasicMaterial({ color: 0xff3344 });
+            const blueMat = new THREE.MeshBasicMaterial({ color: 0x3388ff });
+
+            for (let i = 0; i < particleCount; i++) {
+                const isRed = i % 2 === 0;
+                const p = new THREE.Mesh(geo, isRed ? redMat : blueMat);
+
+                // Initial positions along paths
+                p.userData = {
+                    progress: Math.random(),
+                    type: isRed ? 'sistemik' : 'pulmonalis',
+                    speed: 0.005 + Math.random() * 0.005
+                };
+
+                scene.add(p);
+                bloodParticles.push(p);
+            }
+        }
+
+        function updateBloodParticles() {
+            if (!showBlood) {
+                bloodParticles.forEach(p => p.visible = false);
+                return;
+            }
+
+            bloodParticles.forEach(p => {
+                p.visible = true;
+                p.userData.progress += p.userData.speed * (bpm / 75);
+                if (p.userData.progress > 1) p.userData.progress = 0;
+
+                const t = p.userData.progress;
+
+                if (p.userData.type === 'sistemik') {
+                    // Merah: Ventrikel Kiri -> Aorta -> Tubuh
+                    p.position.x = Math.sin(t * Math.PI * 2) * 1.5 + 0.5;
+                    p.position.y = t * 4 - 1;
+                    p.position.z = Math.cos(t * Math.PI * 2) * 1.2;
+                } else {
+                    // Biru: Vena Cava -> Ventrikel Kanan -> Paru-paru
+                    p.position.x = -Math.sin(t * Math.PI * 2) * 1.3 - 0.5;
+                    p.position.y = t * 3.8 - 1.2;
+                    p.position.z = Math.sin(t * Math.PI) * 1;
+                }
+            });
+        }
+
+        function animate() {
+            animationFrameId = requestAnimationFrame(animate);
+
+            const elapsedTime = clock.getElapsedTime();
+            // Pulse beat speed mapped from BPM
+            const beatFrequency = (bpm / 60) * Math.PI * 2;
+            const beatScale = 1 + Math.sin(elapsedTime * beatFrequency) * 0.06;
+
+            // Heart contraction animation (Systole/Diastole visual)
+            if (heartGroup) {
+                heartGroup.scale.set(beatScale, beatScale * 1.02, beatScale);
+
+                // Update Systole/Diastole UI Badge status dynamically
+                const phaseBadge = document.getElementById('phase-badge');
+                if (Math.sin(elapsedTime * beatFrequency) > 0) {
+                    phaseBadge.textContent = "SISTOL";
+                    phaseBadge.className = "px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 text-[10px] font-bold";
+                } else {
+                    phaseBadge.textContent = "DIASTOL";
+                    phaseBadge.className = "px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 text-[10px] font-bold";
+                }
+            }
+
+            // Animate Valve Open/Close rhythmically
+            if (valvesGroup) {
+                valvesGroup.children.forEach(v => {
+                    v.scale.x = 0.8 + Math.sin(elapsedTime * beatFrequency) * 0.3;
+                });
+            }
+
+            updateBloodParticles();
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            if (!container) return;
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Custom Modal Alert System (Avoiding window.alert)
+        function showAlert(title, message) {
+            document.getElementById('alert-title').textContent = title;
+            document.getElementById('alert-message').textContent = message;
+            document.getElementById('custom-alert').classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert').classList.add('hidden');
+        }
+
+        // Highlight Specific Part of Heart
+        function highlightPart(partKey) {
+            const info = partData[partKey];
+            if (info) {
+                document.getElementById('part-title').innerHTML = `<i class="fa-solid fa-heart-pulse"></i> ${info.title}`;
+                document.getElementById('part-desc').textContent = info.desc;
+            }
+
+            // Reset camera target or add visual emphasis
+            if (partKey === 'aorta') {
+                camera.position.set(1, 3, 8);
+            } else if (partKey === 'leftVentrikula') {
+                camera.position.set(2, 0, 8);
+            } else if (partKey === 'rightVentrikula') {
+                camera.position.set(-2, 0, 8);
+            } else {
+                camera.position.set(0, 2, 12);
+            }
+            controls.target.set(0, 1, 0);
+        }
+
+        // BPM Slider Listener
+        document.getElementById('bpm-slider').addEventListener('input', function (e) {
+            bpm = parseInt(e.target.value);
+            document.getElementById('bpm-val').textContent = bpm + ' BPM';
+        });
+
+        // Reset Camera Button
+        document.getElementById('btn-reset-cam').addEventListener('click', function () {
+            camera.position.set(0, 2, 12);
+            controls.target.set(0, 0, 0);
+        });
+
+        // Toggle Blood Particles
+        document.getElementById('btn-toggle-blood').addEventListener('click', function () {
+            showBlood = !showBlood;
+            this.classList.toggle('bg-red-600');
+            this.classList.toggle('bg-slate-700');
+        });
+
+        // Flow Calculator Function Q = V / t
+        function calculateFlow() {
+            const V = parseFloat(document.getElementById('input-volume').value);
+            const t = parseFloat(document.getElementById('input-time').value);
+
+            if (isNaN(V) || isNaN(t) || t <= 0 || V <= 0) {
+                showAlert("Input Tidak Valid", "Mohon masukkan nilai volume darah dan waktu yang valid (lebih besar dari 0)!");
+                return;
+            }
+
+            // Q in mL/s
+            const Q_mls = V / t;
+            // Cardiac Output in Liter/min assuming 1 beat duration t
+            const beatsPerMin = 60 / t;
+            const cardiacOutput_Lmin = (V * beatsPerMin) / 1000;
+
+            document.getElementById('res-ml-s').textContent = Q_mls.toFixed(2);
+            document.getElementById('res-l-min').textContent = cardiacOutput_Lmin.toFixed(2);
+
+            let status = "";
+            if (cardiacOutput_Lmin < 4.0) {
+                status = "Analisis: Debit curah jantung tergolong rendah (kondisi istirahat santai atau bradikardia).";
+            } else if (cardiacOutput_Lmin <= 6.5) {
+                status = "Analisis: Debit aliran berada pada rentang normal manusia dewasa dalam keadaan istirahat (~5 L/menit).";
+            } else {
+                status = "Analisis: Debit curah jantung tinggi (sesuai kondisi aktivitas fisik atau olahraga berat).";
+            }
+            document.getElementById('res-analysis').textContent = status;
+        }
+
+        // WebAR Feature Handlers
+        document.getElementById('btn-ar-modal').addEventListener('click', function () {
+            document.getElementById('ar-modal').classList.remove('hidden');
+        });
+
+        function closeARModal() {
+            document.getElementById('ar-modal').classList.add('hidden');
+            const video = document.getElementById('ar-video');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        }
+
+        function startARCamera() {
+            const video = document.getElementById('ar-video');
+            const placeholder = document.getElementById('ar-placeholder');
+
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                    .then(function (stream) {
+                        video.srcObject = stream;
+                        video.classList.remove('hidden');
+                        placeholder.classList.add('hidden');
+                    })
+                    .catch(function (err) {
+                        showAlert("Akses Kamera Gagal", "Gagal mengakses kamera: " + err.message);
+                    });
+            } else {
+                showAlert("Peramban Tidak Mendukung", "Fitur kamera WebAR tidak didukung pada peramban yang Anda gunakan.");
+            }
+        }
+
+        // Initialize 3D Engine on Window Load
+        window.onload = function () {
+            init3DHeart();
+            calculateFlow();
+        };
+    </script>
+</body>
+</html>
